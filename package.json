@@ -1,0 +1,8 @@
+{
+  "name": "les-mains-d-emeraude",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "stripe": "^17.7.0"
+  }
+}

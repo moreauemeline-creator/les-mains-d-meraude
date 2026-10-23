@@ -1,0 +1,25 @@
+LES MAINS D’ÉMERAUDE — PRÉPARATION STRIPE EN MODE TEST
+
+Important : ce ZIP n’est pas encore une boutique validée en production. Il n’intègre pas encore de webhook, de confirmation de commande fiable, de gestion du stock, ni l’activation sécurisée du code BIENVENUE.
+
+Ce qui est préparé :
+- Le navigateur demande à une fonction Netlify de créer une session Stripe Checkout.
+- Les prix sont recalculés côté serveur : bracelet 9 € + 1 € par charm ; collier 12 € + 1 € par charm.
+- La fonction accepte les indices de charms 0 à 144 (145 charms).
+- Livraison France : 4,50 € sous 60 € de bijoux ; offerte dès 60 €, avant réduction.
+- Les prix envoyés par le navigateur ne sont pas utilisés pour facturer.
+
+Avant de déployer :
+1. Dans Netlify, ajouter la variable d’environnement STRIPE_SECRET_KEY avec la clé SECRÈTE DE TEST Stripe (sk_test_...). Ne jamais mettre cette clé dans index.html ni la partager dans un message.
+2. Déployer ce ZIP sur un site de test distinct, pas sur la boutique actuelle.
+3. Vérifier l’installation de la dépendance Stripe et les logs Netlify.
+4. Effectuer des tests Stripe en mode test seulement.
+
+Limitations à résoudre avant vente réelle :
+- Le code BIENVENUE est bloqué au paiement tant qu’on ne peut pas vérifier de façon fiable la première commande.
+- Les numéros de charms apparaissent dans les détails de commande, mais il faut vérifier leur correspondance avec le catalogue et les noms affichés.
+- Pas de webhook de paiement confirmé, d’email de confirmation, de réservation de stock, ni de marquage automatique des pièces uniques comme vendues.
+- Le calcul suppose que le panier ne contient que les bijoux personnalisés de ce configurateur.
+- Vérifier les obligations légales, la politique de confidentialité et les conditions de vente avant mise en ligne.
+
+N’ajoute jamais la clé Stripe dans les fichiers du site. Le site actuel doit rester en ligne jusqu’à la validation complète.
