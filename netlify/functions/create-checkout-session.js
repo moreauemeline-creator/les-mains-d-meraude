@@ -75,7 +75,7 @@ exports.handler = async (event) => {
       billing_address_collection: "required",
       shipping_address_collection: { allowed_countries: ["FR"] },
       phone_number_collection: { enabled: true },
-      success_url: `${siteUrl}/?paiement=succes&session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${siteUrl}/merci.html?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/?paiement=annule`,
       metadata: { source: "les-mains-d-emeraude", charm_count: String(cart.reduce((n, i) => n + i.charms.length, 0)) }
     });
