@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f1e5">
+  <title>Merci pour votre commande — Les Mains d’Émeraude</title>
+  <style>
+    :root { --cream:#fbf5e9; --green:#174b3a; --gold:#b88b42; --ink:#20231f; }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; padding:24px 14px; color:var(--ink);
+      background:var(--cream); font-family: Georgia, "Times New Roman", serif;
+      line-height:1.65;
+    }
+    .page {
+      width:min(100%, 850px); margin:0 auto; padding:clamp(22px,5vw,58px);
+      text-align:center; border:1px solid var(--gold); border-radius:22px;
+      background:rgba(255,255,255,.28);
+      box-shadow:0 8px 32px rgba(72,52,20,.06);
+      position:relative; overflow:hidden;
+    }
+    .page:before { content:""; position:absolute; inset:7px; border:1px solid rgba(184,139,66,.35); border-radius:16px; pointer-events:none; }
+    .logo { display:block; width:min(100%,280px); height:auto; margin:0 auto 10px; mix-blend-mode:multiply; }
+    h1 { color:var(--green); font-weight:500; font-size:clamp(2rem,5vw,3.2rem); line-height:1.15; margin:12px 0 18px; }
+    .ornament { color:var(--gold); letter-spacing:.2em; margin:14px auto 18px; }
+    .subtitle { color:var(--green); font-size:clamp(1.3rem,3.5vw,2rem); font-style:italic; margin:0 auto 22px; }
+    p { font-size:clamp(1rem,2vw,1.18rem); margin:0 auto 18px; max-width:660px; }
+    .highlight { color:var(--green); font-weight:bold; }
+    .signoff { color:var(--green); font-size:clamp(1.1rem,2.5vw,1.45rem); font-weight:bold; }
+    .button {
+      display:inline-flex; align-items:center; justify-content:center; gap:12px;
+      margin:20px auto 0; padding:15px 28px; min-height:58px;
+      width:min(100%,460px); border:2px solid var(--gold); border-radius:16px;
+      background:var(--green); color:#fffaf0; text-decoration:none;
+      font-size:clamp(1rem,2.5vw,1.25rem); transition:transform .15s ease, background .15s ease;
+    }
+    .button:hover { background:#103b2d; transform:translateY(-1px); }
+    .button:focus-visible { outline:3px solid var(--gold); outline-offset:4px; }
+    .bag { width:23px; height:23px; flex:0 0 auto; }
+    .small { font-size:.92rem; color:#55554c; margin-top:18px; }
+    @media (max-width:480px) { body { padding:10px 8px; } .page { padding:20px 17px 26px; border-radius:15px; } .page:before { inset:4px; border-radius:11px; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <img class="logo" src="assets/logo-les-mains-emeraude.jpg" alt="Logo Les Mains d’Émeraude">
+    <h1>Merci pour votre commande 💚</h1>
+    <div class="ornament" aria-hidden="true">──────── ✦ ────────</div>
+    <p class="subtitle">Votre bijou raconte désormais une nouvelle histoire…</p>
+    <p>Merci d’avoir choisi Les Mains d’Émeraude et de soutenir mon artisanat.</p>
+    <p>Votre paiement a été confirmé et votre commande a bien été prise en compte. Je vais préparer vos bijoux avec soin, en portant une attention particulière à chaque détail.</p>
+    <p class="highlight">✨ Chaque création est réalisée avec passion, spécialement pour vous.</p>
+    <p>Vous recevrez les informations concernant votre commande par e-mail dès que le système de confirmation sera configuré.</p>
+    <p>Merci pour votre confiance et à très bientôt !</p>
+    <div class="ornament" aria-hidden="true">──── ♥ ────</div>
+    <p><em>Avec toute ma gratitude,</em><br><span class="signoff">Émeline — Les Mains d’Émeraude</span></p>
+    <a class="button" href="/" aria-label="Retourner à la boutique">
+      <svg class="bag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+        <path d="M5 8h14l1 13H4L5 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>
+      </svg>
+      Retourner à la boutique
+    </a>
+    <p class="small">Les Mains d’Émeraude · Créations faites main avec passion en Bretagne</p>
+  </main>
+</body>
+</html>
