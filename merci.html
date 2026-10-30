@@ -63,5 +63,13 @@
     </a>
     <p class="small">Les Mains d’Émeraude · Créations faites main avec passion en Bretagne</p>
   </main>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("session_id")) {
+      try {
+        localStorage.removeItem("lme_cart");
+      } catch (e) {}
+    }
+  </script>
 </body>
 </html>
