@@ -1,0 +1,7 @@
+Catalogue intégré au site Les Mains d’Émeraude.
+
+60 fiches : 12 bracelets (14 €), 17 colliers (17 €), 23 bagues (8,50 €), 8 paires de boucles d’oreilles (8,50 €).
+Chaque fiche dispose d’un bouton Ajouter au panier. Les prix des produits du catalogue sont validés côté serveur dans la fonction Netlify Stripe.
+Les images sont conservées telles quelles dans le dossier catalogue/. Le Bar à charms et son parcours restent présents.
+
+Important : le paiement dépend toujours de la configuration Stripe/Netlify du dépôt (STRIPE_SECRET_KEY et URL). Le code promo BIENVENUE reste désactivé côté paiement réel, conformément à la fonction actuelle.
