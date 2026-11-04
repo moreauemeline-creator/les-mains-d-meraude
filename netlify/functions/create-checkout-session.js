@@ -126,7 +126,7 @@ exports.handler = async (event) => {
       phone_number_collection: { enabled: true },
       success_url: `${siteUrl}/merci.html?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/?paiement=annule`,
-      metadata: { source: "les-mains-d-emeraude", charm_count: String(cart.reduce((n, i) => n + i.charms.length, 0)) }
+      metadata: { source: "les-mains-d-emeraude", charm_count: String(cart.reduce((n, i) => n + (Array.isArray(i.charms) ? i.charms.length : 0), 0)) }
     });
     return reply(200, { url: session.url });
   } catch (error) {
