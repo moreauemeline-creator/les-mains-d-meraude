@@ -14,7 +14,53 @@ exports.handler = async (event) => {
       return reply(400, { error: "Panier invalide." });
     }
 
+    const cataloguePrices = {
+      "catalogue-bracelet": 1400,
+      "catalogue-collier": 1700,
+      "catalogue-bague": 850,
+      "catalogue-boucles": 850
+    };
+    const catalogueLimits = {
+      "catalogue-bracelet": 12,
+      "catalogue-collier": 17,
+      "catalogue-bague": 23,
+      "catalogue-boucles": 8
+    };
     const line_items = cart.map((item) => {
+      if (item && typeof item.type === "string" && item.type.startsWith("catalogue-")) {
+        const cents = cataloguePrices[item.type];
+        const limit = catalogueLimits[item.type];
+        const match = typeof item.productId === "string"
+          ? item.productId.match(/^(?:bracelets|colliers|bagues|boucles-doreilles)-(\d{2})$/)
+          : null;
+        const number = match ? Number(match[1]) : 0;
+        const expectedPrefix = {
+          "catalogue-bracelet": "bracelets",
+          "catalogue-collier": "colliers",
+          "catalogue-bague": "bagues",
+          "catalogue-boucles": "boucles-doreilles"
+        }[item.type];
+        if (!cents || !match || !item.productId.startsWith(expectedPrefix + "-") || number < 1 || number > limit) {
+          throw new Error("Un produit du catalogue n’est pas valide. Vérifie le panier.");
+        }
+        const labels = {
+          "catalogue-bracelet": "Bracelet prêt à porter",
+          "catalogue-collier": "Collier prêt à porter",
+          "catalogue-bague": "Bague prête à porter",
+          "catalogue-boucles": "Boucles d’oreilles prêtes à porter"
+        };
+        return {
+          price_data: {
+            currency: "eur",
+            unit_amount: cents,
+            product_data: {
+              name: `${labels[item.type]} — modèle ${String(number).padStart(2, "0")}`,
+              description: "Bijou fait main — Les Mains d’Émeraude"
+            }
+          },
+          quantity: 1
+        };
+      }
       if (!item || !["bracelet", "collier"].includes(item.type) ||
           !Number.isInteger(Number(item.chain)) || Number(item.chain) < 0 || Number(item.chain) > 3 ||
           !Array.isArray(item.charms) || item.charms.length > 145 ||
@@ -24,7 +70,6 @@ exports.handler = async (event) => {
       const base = item.type === "bracelet" ? 9 : 12;
       const price = base + item.charms.length;
       const suppliedNames = Array.isArray(item.charmNames) ? item.charmNames : [];
-      // Names are descriptive only; server-side fixed prices above remain authoritative.
       const names = item.charms.map((c, index) => {
         const name = suppliedNames[index];
         return typeof name === "string" && name.trim()
@@ -46,8 +91,12 @@ exports.handler = async (event) => {
       };
     });
 
-    const subtotal = cart.reduce((sum, item) =>
-      sum + (item.type === "bracelet" ? 9 : 12) + item.charms.length, 0);
+    const subtotal = cart.reduce((sum, item) => {
+      if (item && typeof item.type === "string" && item.type.startsWith("catalogue-")) {
+        return sum + (cataloguePrices[item.type] || 0);
+      }
+      return sum + (item.type === "bracelet" ? 9 : 12) * 100 + item.charms.length * 100;
+    }, 0) / 100;
 
     // Livraison offerte à partir de 60 € de bijoux, avant réduction.
     if (subtotal < 60) {
