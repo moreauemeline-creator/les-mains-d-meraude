@@ -2,8 +2,11 @@
   "name": "les-mains-d-emeraude",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "dependencies": {
-    "nodemailer": "^6.10.1",
+    "@netlify/blobs": "^11.1.8",
     "stripe": "^17.7.0"
   }
 }
