@@ -54,7 +54,10 @@ exports.handler = async (event) => {
             currency: "eur",
             unit_amount: cents,
             product_data: {
-              name: `${labels[item.type]} — modèle ${String(number).padStart(2, "0")}`,
+              // Reprend exactement le nom affiché sur la fiche du catalogue.
+              name: (typeof item.title === "string" && item.title.trim())
+                ? item.title.trim().slice(0, 200)
+                : `${labels[item.type]} — modèle ${String(number).padStart(2, "0")}`,
               description: "Bijou fait main — Les Mains d’Émeraude"
             }
           },

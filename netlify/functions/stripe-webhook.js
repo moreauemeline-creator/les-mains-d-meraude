@@ -42,7 +42,10 @@ exports.handler = async (event) => {
 
   try {
     const [items] = await Promise.all([
-      stripe.checkout.sessions.listLineItems(session.id, { limit: 100 })
+      stripe.checkout.sessions.listLineItems(session.id, {
+        limit: 100,
+        expand: ["data.price.product"]
+      })
     ]);
 
     const customer = session.customer_details || {};
@@ -61,12 +64,27 @@ exports.handler = async (event) => {
     const fullAddress = addressParts.length ? addressParts.join("\n") : "Adresse non transmise par Stripe";
     const ref = session.id.slice(-8).toUpperCase();
     const total = ((session.amount_total || 0) / 100).toFixed(2).replace(".", ",");
+    // Le nom identifie le bijou ; la description Stripe contient la chaîne
+    // choisie et les noms des charms pour les bijoux personnalisés.
+    const getItemDetails = (item) => {
+      const product = item.price && item.price.product && typeof item.price.product === "object"
+        ? item.price.product
+        : null;
+      const name = item.description || (product && product.name) || "Article";
+      const details = product && typeof product.description === "string"
+        ? product.description.trim()
+        : "";
+      const genericDescription = "Bijou fait main — Les Mains d’Émeraude";
+      return details && details !== genericDescription
+        ? `${name} — ${details}`
+        : name;
+    };
     const itemLines = items.data.map(item =>
-      `- ${item.description || "Article"} × ${item.quantity || 1}`
+      `- ${getItemDetails(item)} × ${item.quantity || 1}`
     );
     const listText = itemLines.join("\n");
     const listHtml = items.data.map(item =>
-      `<li>${escapeHtml(item.description || "Article")} × ${item.quantity || 1}</li>`
+      `<li>${escapeHtml(getItemDetails(item))} × ${item.quantity || 1}</li>`
     ).join("");
 
     const mailer = nodemailer.createTransport({
