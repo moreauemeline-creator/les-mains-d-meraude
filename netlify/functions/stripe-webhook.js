@@ -1,6 +1,9 @@
 const Stripe = require("stripe");
 const nodemailer = require("nodemailer");
 
+const STOCK_STORE = "lme-unique-products";
+const stockKey = (productId) => `catalogue:${productId}`;
+
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") return response(405, "Method not allowed");
   if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
@@ -26,13 +29,55 @@ exports.handler = async (event) => {
     return response(400, "Invalid Stripe signature");
   }
 
-  if (stripeEvent.type !== "checkout.session.completed") {
+  const session = stripeEvent.data.object;
+  if (!["checkout.session.completed", "checkout.session.expired"].includes(stripeEvent.type)) {
     return response(200, "Event ignored");
   }
 
-  const session = stripeEvent.data.object;
-  if (session.payment_status !== "paid") {
-    return response(200, "Payment not paid; emails skipped");
+  try {
+    const { getStore } = await import("@netlify/blobs");
+    const stock = getStore({ name: STOCK_STORE, region: "eu-central-1", consistency: "strong" });
+    const lineItems = await stripe.checkout.sessions.listLineItems(session.id, {
+      limit: 100,
+      expand: ["data.price.product"]
+    });
+    const productIds = lineItems.data
+      .map((line) => {
+        const product = line.price && line.price.product && typeof line.price.product === "object" ? line.price.product : null;
+        return product && product.metadata ? product.metadata.product_id : null;
+      })
+      .filter((id) => typeof id === "string" && /^(bracelets-\d{2}|colliers-\d{2}|bagues-\d{2}|boucles-doreilles-\d{2})$/.test(id));
+
+    if (stripeEvent.type === "checkout.session.expired") {
+      for (const productId of productIds) {
+        const key = stockKey(productId);
+        const current = await stock.get(key, { type: "text", consistency: "strong" });
+        if (current === `reserved:${session.id}`) await stock.delete(key);
+      }
+      return response(200, "Expired checkout reservations released");
+    }
+
+    if (session.payment_status !== "paid") {
+      return response(200, "Payment not paid; emails skipped");
+    }
+
+    // À paiement confirmé, le statut devient définitivement « vendu ».
+    for (const productId of productIds) {
+      const key = stockKey(productId);
+      const current = await stock.getWithMetadata(key, { consistency: "strong" });
+      if (!current) {
+        const created = await stock.set(key, "sold", { onlyIfNew: true });
+        if (!created.modified) throw new Error(`Conflit de stock lors de la vente de ${productId}`);
+      } else if (current.data === `reserved:${session.id}`) {
+        const updated = await stock.set(key, "sold", { onlyIfMatch: current.etag });
+        if (!updated.modified) throw new Error(`Impossible de confirmer le statut vendu de ${productId}`);
+      } else if (current.data !== "sold") {
+        throw new Error(`Réservation de stock incohérente pour ${productId}`);
+      }
+    }
+  } catch (stockError) {
+    console.error("Unique-product stock update failed:", stockError.message);
+    return response(500, "Unique-product stock update failed");
   }
 
   if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {

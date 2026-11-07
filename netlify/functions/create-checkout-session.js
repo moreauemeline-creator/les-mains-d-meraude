@@ -1,5 +1,8 @@
 const Stripe = require("stripe");
 
+const STOCK_STORE = "lme-unique-products";
+const stockKey = (productId) => `catalogue:${productId}`;
+
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return reply(204, {});
   if (event.httpMethod !== "POST") return reply(405, { error: "Méthode non autorisée." });
@@ -26,6 +29,13 @@ exports.handler = async (event) => {
       "catalogue-bague": 23,
       "catalogue-boucles": 8
     };
+    const catalogueIds = cart
+      .filter((item) => item && typeof item.type === "string" && item.type.startsWith("catalogue-"))
+      .map((item) => item.productId);
+    if (catalogueIds.some((id) => typeof id !== "string") || new Set(catalogueIds).size !== catalogueIds.length) {
+      throw new Error("Un même bijou unique ne peut apparaître qu’une seule fois dans le panier.");
+    }
+
     const line_items = cart.map((item) => {
       if (item && typeof item.type === "string" && item.type.startsWith("catalogue-")) {
         const cents = cataloguePrices[item.type];
@@ -58,7 +68,8 @@ exports.handler = async (event) => {
               name: (typeof item.title === "string" && item.title.trim())
                 ? item.title.trim().slice(0, 200)
                 : `${labels[item.type]} — modèle ${String(number).padStart(2, "0")}`,
-              description: "Bijou fait main — Les Mains d’Émeraude"
+              description: "Bijou fait main — Les Mains d’Émeraude",
+              metadata: { product_id: item.productId }
             }
           },
           quantity: 1
@@ -124,6 +135,7 @@ exports.handler = async (event) => {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items,
+      expires_at: Math.floor(Date.now() / 1000) + 31 * 60,
       billing_address_collection: "required",
       shipping_address_collection: { allowed_countries: ["FR"] },
       phone_number_collection: { enabled: true },
@@ -131,6 +143,29 @@ exports.handler = async (event) => {
       cancel_url: `${siteUrl}/?paiement=annule`,
       metadata: { source: "les-mains-d-emeraude", charm_count: String(cart.reduce((n, i) => n + (Array.isArray(i.charms) ? i.charms.length : 0), 0)) }
     });
+
+    // Une réservation atomique empêche deux clientes de payer la même pièce unique.
+    const reservedKeys = [];
+    if (catalogueIds.length) {
+      const { getStore } = await import("@netlify/blobs");
+      const stock = getStore({ name: STOCK_STORE, region: "eu-central-1", consistency: "strong" });
+      try {
+        for (const productId of catalogueIds) {
+          const result = await stock.set(stockKey(productId), `reserved:${session.id}`, { onlyIfNew: true });
+          if (!result.modified) {
+            throw new Error(`« ${productId} » vient d’être réservé ou vendu. Actualise la boutique et vérifie ton panier.`);
+          }
+          reservedKeys.push(stockKey(productId));
+        }
+      } catch (reservationError) {
+        for (const key of reservedKeys) {
+          const current = await stock.get(key, { type: "text", consistency: "strong" });
+          if (current === `reserved:${session.id}`) await stock.delete(key);
+        }
+        await stripe.checkout.sessions.expire(session.id).catch(() => {});
+        return reply(409, { error: reservationError.message || "Ce bijou n’est plus disponible." });
+      }
+    }
     return reply(200, { url: session.url });
   } catch (error) {
     return reply(400, { error: error.message || "Erreur lors de la préparation du paiement." });
