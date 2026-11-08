@@ -149,7 +149,7 @@ exports.handler = async (event) => {
     if (catalogueIds.length) {
       const { connectLambda, getStore } = await import("@netlify/blobs");
       connectLambda(event);
-      const stock = getStore({ name: STOCK_STORE, region: "eu-central-1", consistency: "strong" });
+      const stock = getStore({ name: STOCK_STORE, region: "eu-central-1" });
       try {
         for (const productId of catalogueIds) {
           const result = await stock.set(stockKey(productId), `reserved:${session.id}`, { onlyIfNew: true });
@@ -160,7 +160,7 @@ exports.handler = async (event) => {
         }
       } catch (reservationError) {
         for (const key of reservedKeys) {
-          const current = await stock.get(key, { type: "text", consistency: "strong" });
+          const current = await stock.get(key, { type: "text" });
           if (current === `reserved:${session.id}`) await stock.delete(key);
         }
         await stripe.checkout.sessions.expire(session.id).catch(() => {});
