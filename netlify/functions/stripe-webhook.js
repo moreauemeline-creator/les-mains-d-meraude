@@ -35,8 +35,9 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { getStore } = require("@netlify/blobs");
-    const stock = getStore({ name: STOCK_STORE });
+    const { connectLambda, getStore } = await import("@netlify/blobs");
+    connectLambda(event);
+    const stock = getStore({ name: STOCK_STORE, region: "eu-central-1", consistency: "strong" });
     const lineItems = await stripe.checkout.sessions.listLineItems(session.id, {
       limit: 100,
       expand: ["data.price.product"]
