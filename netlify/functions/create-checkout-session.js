@@ -147,8 +147,8 @@ exports.handler = async (event) => {
     // Une réservation atomique empêche deux clientes de payer la même pièce unique.
     const reservedKeys = [];
     if (catalogueIds.length) {
-      const { getStore } = await import("@netlify/blobs");
-      const stock = getStore({ name: STOCK_STORE, region: "eu-central-1", consistency: "strong" });
+      const { getStore } = require("@netlify/blobs");
+      const stock = getStore({ name: STOCK_STORE });
       try {
         for (const productId of catalogueIds) {
           const result = await stock.set(stockKey(productId), `reserved:${session.id}`, { onlyIfNew: true });

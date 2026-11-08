@@ -35,8 +35,8 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { getStore } = await import("@netlify/blobs");
-    const stock = getStore({ name: STOCK_STORE, region: "eu-central-1", consistency: "strong" });
+    const { getStore } = require("@netlify/blobs");
+    const stock = getStore({ name: STOCK_STORE });
     const lineItems = await stripe.checkout.sessions.listLineItems(session.id, {
       limit: 100,
       expand: ["data.price.product"]
@@ -51,7 +51,7 @@ exports.handler = async (event) => {
     if (stripeEvent.type === "checkout.session.expired") {
       for (const productId of productIds) {
         const key = stockKey(productId);
-        const current = await stock.get(key, { type: "text", consistency: "strong" });
+        const current = await stock.get(key, { type: "text" });
         if (current === `reserved:${session.id}`) await stock.delete(key);
       }
       return response(200, "Expired checkout reservations released");
@@ -64,7 +64,7 @@ exports.handler = async (event) => {
     // À paiement confirmé, le statut devient définitivement « vendu ».
     for (const productId of productIds) {
       const key = stockKey(productId);
-      const current = await stock.getWithMetadata(key, { consistency: "strong" });
+      const current = await stock.getWithMetadata(key);
       if (!current) {
         const created = await stock.set(key, "sold", { onlyIfNew: true });
         if (!created.modified) throw new Error(`Conflit de stock lors de la vente de ${productId}`);
