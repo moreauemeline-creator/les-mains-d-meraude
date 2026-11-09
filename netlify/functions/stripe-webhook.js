@@ -190,7 +190,7 @@ exports.handler = async (event) => {
 
     await mailer.sendMail({
       from: `"Les Mains d’Émeraude" <${process.env.GMAIL_USER}>`,
-      to: process.env.GMAIL_USER,
+     to: process.env.ORDER_NOTIFICATION_EMAIL || process.env.GMAIL_USER,
       replyTo: customerEmail || undefined,
       subject: `Nouvelle commande ${ref} — Les Mains d’Émeraude`,
       text: sellerText,
