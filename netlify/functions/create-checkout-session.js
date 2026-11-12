@@ -17,6 +17,11 @@ exports.handler = async (event) => {
       return reply(400, { error: "Panier invalide." });
     }
 
+    const customerEmail = String(payload.email || "").trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
+      return reply(400, { error: "Merci de renseigner une adresse e-mail valide avant de passer commande." });
+    }
+
     const cataloguePrices = {
       "catalogue-bracelet": 1400,
       "catalogue-collier": 1700,
@@ -133,12 +138,54 @@ exports.handler = async (event) => {
       return reply(500, { error: "Le code BIENVENUE n’est pas encore configuré dans Stripe. Aucun paiement n’a été lancé." });
     }
 
-    const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    const matchingCustomers = await stripe.customers.list({ email: customerEmail, limit: 100 });
+    let existingCustomer = null;
+
+    // On privilégie un profil ayant déjà un paiement réussi pour cette adresse.
+    for (const candidate of matchingCustomers.data) {
+      let startingAfter;
+      let hasSuccessfulPayment = false;
+      let hasMore = true;
+      while (hasMore && !hasSuccessfulPayment) {
+        const params = { customer: candidate.id, limit: 100 };
+        if (startingAfter) params.starting_after = startingAfter;
+        const intents = await stripe.paymentIntents.list(params);
+        hasSuccessfulPayment = intents.data.some((intent) => intent.status === "succeeded");
+        hasMore = intents.has_more;
+        if (hasMore && intents.data.length) startingAfter = intents.data[intents.data.length - 1].id;
+        else hasMore = false;
+      }
+      if (hasSuccessfulPayment) {
+        existingCustomer = candidate;
+        break;
+      }
+    }
+
+    // Sinon, réutilise le profil le plus ancien (ex. tentative abandonnée).
+    if (!existingCustomer && matchingCustomers.data.length) {
+      existingCustomer = matchingCustomers.data.slice().sort((a, b) => a.created - b.created)[0];
+    }
+
+    if (wantsWelcome) {
+      const promotion = await stripe.promotionCodes.retrieve(welcomePromotionId);
+      if (!promotion.active ||
+          String(promotion.code || "").toUpperCase() !== "BIENVENUE" ||
+          !promotion.restrictions ||
+          promotion.restrictions.first_time_transaction !== true) {
+        return reply(500, { error: "La promotion BIENVENUE doit être active et limitée à la première commande dans Stripe. Aucun paiement n’a été lancé." });
+      }
+    }
+
     const siteUrl = process.env.URL.replace(/\/$/, "");
+    const customerOptions = existingCustomer
+      ? { customer: existingCustomer.id }
+      : { customer_email: customerEmail, customer_creation: "always" };
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items,
-      customer_creation: "always",
+      ...customerOptions,
       ...(wantsWelcome ? { discounts: [{ promotion_code: welcomePromotionId }] } : {}),
       expires_at: Math.floor(Date.now() / 1000) + 31 * 60,
       billing_address_collection: "required",
