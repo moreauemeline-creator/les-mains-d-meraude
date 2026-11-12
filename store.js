@@ -53,7 +53,7 @@
     const code=(field?.value||"").trim().toUpperCase();
     if(code === "BIENVENUE"){
       promoApplied=true;
-      if(msg){msg.textContent="Code BIENVENUE appliqué. La remise sera vérifiée lors du paiement.";msg.style.color="var(--green)";}
+      if(msg){msg.textContent="Code BIENVENUE pris en compte : −10 % sur une première commande uniquement. Stripe vérifiera ton éligibilité au paiement.";msg.style.color="var(--green)";}
     } else {
       promoApplied=false;
       if(msg){msg.textContent="Code non reconnu. Vérifie l’orthographe.";msg.style.color="#a33";}
