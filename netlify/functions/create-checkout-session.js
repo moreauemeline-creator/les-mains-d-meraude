@@ -98,7 +98,7 @@ exports.handler = async (event) => {
           unit_amount: price * 100,
           product_data: {
             name: productName,
-            description: `${chainNames[Number(item.chain)]} · ${item.charms.length} charm(s)${names ? " : " + names : ""}`
+            description: `${chainNames[Number(item.chain)]} · ordre des charms de gauche à droite : ${names || "aucun charm"}`
           }
         },
         quantity: 1
