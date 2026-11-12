@@ -1,0 +1,25 @@
+LES MAINS D’ÉMERAUDE — VERSION MULTI-PAGES
+
+Fichiers à ajouter/remplacer à la racine du site :
+- index.html (accueil)
+- boutique.html
+- bar-a-charms.html
+- panier.html
+- informations.html
+- merci.html
+- styles.css
+- store.js
+- bar.js
+- catalogue.js
+- merci.js
+- home.js
+
+IMPORTANT : conserver les dossiers et fonctions Netlify déjà présents dans ton dépôt, notamment :
+- assets/ (photos, chaînes, charms et image d’accueil)
+- catalogue/ (photos des créations)
+- netlify/functions/product-stock.js et les autres fonctions de stock
+- netlify/functions/stripe-webhook.js
+
+Pour que le retour de paiement fonctionne sur la page merci.html et que l’ordre des charms soit transmis à Stripe, utiliser la version mise à jour de create-checkout-session.js fournie dans le sous-dossier netlify/functions de cette archive. Ne pas supprimer les autres fonctions Netlify existantes.
+
+Déploiement : extraire cette archive dans le dossier du site / à la racine du dépôt en fusionnant les fichiers, sans supprimer assets/, catalogue/ ni les autres fonctions Netlify.

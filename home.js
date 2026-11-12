@@ -1,0 +1,1 @@
+(function(){const params=new URLSearchParams(location.search);if(params.get("paiement")==="annule"){const box=document.createElement("p");box.id="homeNotice";box.className="homeNotice";box.textContent="Le paiement a été annulé. Ton panier est conservé.";const main=document.querySelector(".mockupAccueil");if(main)main.insertAdjacentElement("afterend",box);}})();
