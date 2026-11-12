@@ -124,10 +124,13 @@ exports.handler = async (event) => {
       });
     }
 
-    // BIENVENUE est désactivé côté serveur tant qu’un stockage fiable ne permet pas
-    // de vérifier qu’il s’agit bien de la première commande du client.
-    if (String(payload.promoCode || "").trim().toUpperCase() === "BIENVENUE") {
-      return reply(400, { error: "Le code BIENVENUE n’est pas encore activé pour le paiement réel. Aucun paiement n’a été lancé." });
+    // Le code BIENVENUE est limité à la première commande par Stripe.
+    // Créer dans Stripe un code promotionnel avec la restriction « première commande uniquement »,
+    // puis renseigner son identifiant dans STRIPE_BIENVENUE_PROMOTION_CODE_ID.
+    const wantsWelcome = String(payload.promoCode || "").trim().toUpperCase() === "BIENVENUE";
+    const welcomePromotionId = process.env.STRIPE_BIENVENUE_PROMOTION_CODE_ID;
+    if (wantsWelcome && !welcomePromotionId) {
+      return reply(500, { error: "Le code BIENVENUE n’est pas encore configuré dans Stripe. Aucun paiement n’a été lancé." });
     }
 
     const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
@@ -135,6 +138,8 @@ exports.handler = async (event) => {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items,
+      customer_creation: "always",
+      ...(wantsWelcome ? { discounts: [{ promotion_code: welcomePromotionId }] } : {}),
       expires_at: Math.floor(Date.now() / 1000) + 31 * 60,
       billing_address_collection: "required",
       shipping_address_collection: { allowed_countries: ["FR"] },
