@@ -63,11 +63,18 @@
   async function beginCheckout(){
     const note=document.getElementById("checkoutNote");
     if(!cart.length){ if(note) note.textContent="Ajoute d’abord un bijou au panier."; return; }
+    const emailField=document.getElementById("customerEmail");
+    const email=(emailField?.value||"").trim().toLowerCase();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+      if(note) note.textContent="Merci de renseigner une adresse e-mail valide avant de passer commande.";
+      emailField?.focus();
+      return;
+    }
     if(note) note.textContent="Préparation du paiement sécurisé…";
     try{
       const response=await fetch("/.netlify/functions/create-checkout-session",{
         method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({cart:cart.map(item=>({...item,charmNames:Array.isArray(item.charmNames)?item.charmNames:[]})),promoCode:promoApplied?"BIENVENUE":"",orderNote:(document.getElementById("orderComment")?.value||"").trim().slice(0,500)})
+        body:JSON.stringify({cart:cart.map(item=>({...item,charmNames:Array.isArray(item.charmNames)?item.charmNames:[]})),email,promoCode:promoApplied?"BIENVENUE":"",orderNote:(document.getElementById("orderComment")?.value||"").trim().slice(0,500)})
       });
       const data=await response.json();
       if(!response.ok) throw new Error(data.error || "Impossible de préparer le paiement.");
