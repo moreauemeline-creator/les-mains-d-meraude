@@ -23,3 +23,21 @@ IMPORTANT : conserver les dossiers et fonctions Netlify déjà présents dans to
 Pour que le retour de paiement fonctionne sur la page merci.html et que l’ordre des charms soit transmis à Stripe, utiliser la version mise à jour de create-checkout-session.js fournie dans le sous-dossier netlify/functions de cette archive. Ne pas supprimer les autres fonctions Netlify existantes.
 
 Déploiement : extraire cette archive dans le dossier du site / à la racine du dépôt en fusionnant les fichiers, sans supprimer assets/, catalogue/ ni les autres fonctions Netlify.
+
+
+CODE BIENVENUE — CONFIGURATION OBLIGATOIRE AVANT ACTIVATION
+1. Dans Stripe, crée un coupon de 10 % de réduction.
+2. Crée un code promotionnel nommé exactement BIENVENUE associé à ce coupon.
+3. Active la restriction « Première commande uniquement » (first-time transaction).
+4. Copie l’identifiant du code promotionnel Stripe (il commence généralement par promo_).
+5. Dans les variables d’environnement Netlify, ajoute STRIPE_BIENVENUE_PROMOTION_CODE_ID avec cet identifiant.
+6. Crée/configure un identifiant distinct en mode test et en mode réel : les objets Stripe de test et de production sont séparés.
+7. Déploie la fonction Netlify mise à jour. Tant que la variable n’est pas configurée, le code BIENVENUE ne lance aucun paiement.
+
+Le code est appliqué côté serveur par Stripe. Le site affiche la réduction comme demande de code, mais Stripe décide de l’éligibilité réelle et bloque les clientes ayant déjà commandé. Le paramètre customer_creation=always permet à Stripe de rattacher la commande à un client.
+
+
+DEMANDE PARTICULIÈRE SUR LA COMMANDE
+- Le champ facultatif du panier transmet le commentaire à Stripe (metadata order_note).
+- La fonction netlify/functions/stripe-webhook.js ajoute cette demande dans l’e-mail de nouvelle commande envoyé à la vendeuse.
+- Déployer aussi cette fonction et vérifier que le webhook Stripe pointe vers /.netlify/functions/stripe-webhook.
