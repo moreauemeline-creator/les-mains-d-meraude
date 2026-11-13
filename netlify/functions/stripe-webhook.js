@@ -109,6 +109,7 @@ exports.handler = async (event) => {
     ].filter(Boolean);
     const fullAddress = addressParts.length ? addressParts.join("\n") : "Adresse non transmise par Stripe";
     const ref = session.id.slice(-8).toUpperCase();
+    const orderNote = typeof session.metadata?.order_note === "string" ? session.metadata.order_note.trim().slice(0, 500) : "";
     const total = ((session.amount_total || 0) / 100).toFixed(2).replace(".", ",");
     // Le nom identifie le bijou ; la description Stripe contient la chaîne
     // choisie et les noms des charms pour les bijoux personnalisés.
@@ -168,6 +169,9 @@ exports.handler = async (event) => {
       "Détail de la commande :",
       listText || "- Aucun article retourné par Stripe",
       "",
+      "Demande particulière du client :",
+      orderNote || "Aucune demande particulière.",
+      "",
       `Total payé : ${total} €`,
       "",
       "Paiement confirmé par Stripe."
@@ -184,6 +188,8 @@ exports.handler = async (event) => {
         <p><strong>Adresse de livraison :</strong><br>${escapeHtml(fullAddress).replace(/\n/g, "<br>")}</p>
         <h3>Détail de la commande</h3>
         <ul>${listHtml || "<li>Aucun article retourné par Stripe</li>"}</ul>
+        <h3>Demande particulière du client</h3>
+        <p>${orderNote ? escapeHtml(orderNote).replace(/\n/g, "<br>") : "Aucune demande particulière."}</p>
         <p><strong>Total payé : ${total} €</strong></p>
         <p>Le paiement a été confirmé par Stripe.</p>
       </div>`;
